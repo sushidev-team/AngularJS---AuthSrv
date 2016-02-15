@@ -1,6 +1,6 @@
 # ROUTER-UI AUTH - AngularJS Service
 
-An AngularJS (1.5) service for adding an authentication service. Based on the idea of AuthSrv ([a link](https://github.com/AMBERSIVE/AngularJS---AuthService)) this is a more flexible and robust way to add authentication to router-ui.
+An AngularJS (1.5) service for adding an authentication service. Based on the idea of [AuthSrv](https://github.com/AMBERSIVE/AngularJS---AuthService) this is a more flexible and robust way to add authentication to router-ui.
 
 ### Version
 0.0.1.0
@@ -22,7 +22,7 @@ angular.module('app', ['ambersive.routerui.auth']);
 ### Configuration
 
 This module for angularJS requires an api call where the following json-response come back. At least an user id and/or user roles should be provided.
-The used DB module is explained here ([a link](https://github.com/AMBERSIVE/AngularJS---DBSrv)). For further information about the authentication mechanism while using the DB-Service please visit the documentation there.
+The used DB module is explained [here](https://github.com/AMBERSIVE/AngularJS---DBSrv). For further information about the authentication mechanism while using the DB-Service please visit the documentation there.
 
 ```sh
 
