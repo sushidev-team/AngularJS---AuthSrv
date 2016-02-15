@@ -81,6 +81,7 @@
             $rootScope.$on('$stateChangeStart',
                 function(event, toState, toParams, fromState, fromParams, options){
 
+
                     var registerEntry   = Auth.checkRegister(toState.name),
                         refreshTime     = $authenticationSettings.refreshTime,
                         User        = {},
@@ -456,6 +457,11 @@
                             User = result.data;
                         }
 
+                        deferred.resolve();
+
+                    }, function(result){
+
+                        User = {};
                         deferred.resolve();
 
                     });

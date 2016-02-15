@@ -3,7 +3,7 @@
 An AngularJS (1.5) service for adding an authentication service. Based on the idea of [AuthSrv](https://github.com/AMBERSIVE/AngularJS---AuthService) this is a more flexible and robust way to add authentication to router-ui.
 
 ### Version
-0.0.1.0
+0.0.1.1
 
 ### Installation
 
