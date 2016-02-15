@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AngularJS - AMBERSIVE Auth Service</title>
+    <link   href="../bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="../bower_components/angular/angular.js"></script>
+    <script src="../bower_components/angular-ui-router/release/angular-ui-router.js"></script>
+    <script src="../bower_components/ambersive-db/build/db.js"></script>
+    <script src="../build/auth.js"></script>
+    <script>
+
+
+        angular.module('app', ['ambersive.routerui.auth','ambersive.db','ui.router'])
+        .run(function($log){
+
+        })
+        .config(['$authenticationSettingsProvider','$stateProvider','$urlRouterProvider','$authenticationSettingsProvider','$dbSettingsProvider',
+            function ($authenticationSettingsProvider,$stateProvider,$urlRouterProvider,$authenticationSettingsProvider,$dbSettingsProvider) {
+
+                $dbSettingsProvider.setBaseUrl('http://test.dev/AuthService2/demo/');
+
+                $authenticationSettingsProvider.setApiValue('baseUrl','http://test.dev/AuthService2/demo/');
+                $authenticationSettingsProvider.setApiValue('url','data/response.json');
+
+                $authenticationSettingsProvider.setValue('redirect401Route','app.error');
+                $authenticationSettingsProvider.setValue('redirect403Route','app.error');
+
+                    $stateProvider
+                       .state('app', {
+                           abstract: true,
+                           data: {
+                                roles: ['User']
+                           },
+                           views: {
+                               '': {
+                                   template: '<div ui-view="main"></div>'
+                               }
+                           }
+                       })
+                       .state('app.state1', {
+                                parent: 'app',
+                                url:'/state1',
+                                views: {
+                                    'main@app': {
+                                        template: '<div>state 1 - inherited roles from abstract definition</div>'
+                                    }
+                                }
+                            })
+                       .state('app.state2', {
+                           parent: 'app',
+                           url:'/state2',
+                           data: {
+                               roles: []
+                           },
+                           views: {
+                               'main@app': {
+                                   template: '<div>state 2 - No roles needed</div>'
+                               }
+                           }
+                       })
+                       .state('app.state3', {
+                           parent: 'app',
+                           url:'/state3',
+                           data: {
+                               roles: ['Admin']
+                           },
+                           views: {
+                               'main@app': {
+                                   template: '<div>state 3 - Admin as a role</div>'
+                               }
+                           }
+                       })
+                       .state('app.state4', {
+                           parent: 'app',
+                           url:'/state4',
+                           data: {
+                               roles: [],
+                               redirectOnLogged:{
+                                   route:'app.state1'
+                               }
+                           },
+                           views: {
+                               'main@app': {
+                                   template: '<div>state 4 - redirect - route</div>'
+                               }
+                           }
+                       })
+                       .state('app.state5', {
+                           parent: 'app',
+                           url:'/state5',
+                           data: {
+                               roles: [],
+                               redirectOnLogged:{
+                                   url:'http://www.ambersive.com'
+                               }
+                           },
+                           views: {
+                               'main@app': {
+                                   template: '<div>state 5 - redirect - url</div>'
+                               }
+                           }
+                       })
+                       .state('app.error', {
+                           parent: 'app',
+                           url:'/error',
+                           data: {
+                               roles: []
+                           },
+                           views: {
+                               'main@app': {
+                                   template: '<div>error</div>'
+                               }
+                           }
+                       });
+
+                $urlRouterProvider.otherwise('/state1');
+
+            }])
+           .controller('DemoController',
+                   function($scope,$log,$rootScope){
+
+                       $scope.$on('$statePermissionDenied',function(event,args){
+                          alert('error:'+args.code);
+                       });
+
+                   }
+           );
+
+    </script>
+
+</head>
+<body ng-app="app" ng-controller="DemoController">
+
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <h1>ROUTER-UI Authentication Service</h1>
+            </div>
+            <div class="col-xs-12 col-sm-4">
+                <ul class="nav nav-pills nav-stacked">
+                    <li><a ui-sref="app.state1">State 1</a></li>
+                    <li><a ui-sref="app.state2">State 2</a></li>
+                    <li><a ui-sref="app.state3">State 3 (Redirect no permission)</a></li>
+                    <li><a ui-sref="app.state4">State 4 (Redirect if logged to custom route)</a></li>
+                    <li><a ui-sref="app.state5">State 5 (Redirect if logged to custom url)</a></li>
+                </ul>
+            </div>
+            <div class="col-xs-12 col-sm-8">
+                <div ui-view=""></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
