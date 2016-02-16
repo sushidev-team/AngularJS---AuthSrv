@@ -253,7 +253,8 @@
              */
 
             Auth.getUser = function(){
-              return User;
+                $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
+                return User;
             };
 
             Auth.isAuthenticated = function(){
