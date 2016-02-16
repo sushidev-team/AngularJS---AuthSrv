@@ -81,7 +81,6 @@
             $rootScope.$on('$stateChangeStart',
                 function(event, toState, toParams, fromState, fromParams, options){
 
-
                     var registerEntry   = Auth.checkRegister(toState.name),
                         refreshTime     = $authenticationSettings.refreshTime,
                         User        = {},
@@ -122,6 +121,8 @@
                          * No entry in the $state register
                          * Execute the check
                          */
+
+                        Auth.register(toState.name,true);
 
                         Auth.check(toState,toParams,fromState,fromParams,options).then(function (allow) {
 
@@ -394,7 +395,6 @@
                     allow    = false,
                     neededRoles = [];
 
-
                 /**
                  * Call the promise
                  */
@@ -423,7 +423,7 @@
                  *  Default routine
                  */
 
-                Auth.callAPI().then(function() {
+                Auth.callAPI(toState).then(function() {
 
                     if (toState !== undefined && toState.data !== undefined && toState.data.roles !== undefined && angular.isArray(toState.data.roles)) {
                         neededRoles = neededRoles.concat(toState.data.roles);
@@ -439,7 +439,7 @@
 
             };
 
-            Auth.callAPI = function(){
+            Auth.callAPI = function(toState){
 
                 var deferred    = $q.defer(),
                     baseUrl     = $authenticationSettings.api.baseUrl,

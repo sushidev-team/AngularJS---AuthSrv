@@ -12,7 +12,10 @@
 
 
         angular.module('app', ['ambersive.routerui.auth','ambersive.db','ui.router'])
-        .run(function($log){
+        .run(function($log,$urlRouter){
+
+            $urlRouter.sync();
+            $urlRouter.listen();
 
         })
         .config(['$authenticationSettingsProvider','$stateProvider','$urlRouterProvider','$authenticationSettingsProvider','$dbSettingsProvider',
