@@ -62,8 +62,8 @@
         }
     ]);
 
-    angular.module('ambersive.routerui.auth').run(['$rootScope','$urlRouter','$state','$log','Auth','$authenticationSettings','DB',
-        function($rootScope,$urlRouter,$state,$log,Auth,$authenticationSettings,DB){
+    angular.module('ambersive.routerui.auth').run(['$rootScope','$urlRouter','$state','$log','Auth','$authenticationSettings','DB','$dbSettings',
+        function($rootScope,$urlRouter,$state,$log,Auth,$authenticationSettings,DB,$dbSettings){
 
             DB({'name':'Auth','baseUrl':$authenticationSettings.api.baseUrl,'url':$authenticationSettings.api.url,except:$authenticationSettings.api.except});
 
@@ -218,8 +218,8 @@
         }
     ]);
 
-    angular.module('ambersive.routerui.auth').factory('Auth',['$q','DB','$timeout','$log','$state','$authenticationSettings','$rootScope',
-        function($q,DB,$timeout,$log,$state,$authenticationSettings,$rootScope){
+    angular.module('ambersive.routerui.auth').factory('Auth',['$q','DB','$timeout','$log','$state','$authenticationSettings','$dbSettings','$rootScope',
+        function($q,DB,$timeout,$log,$state,$authenticationSettings,$dbSettings,$rootScope){
 
             var Auth            = {},
                 Helper          = {},
@@ -253,8 +253,27 @@
              */
 
             Auth.getUser = function(){
-                $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
-                return User;
+
+                var storageName = $dbSettings.storageName,
+                    tokenData   = null,
+                    UserData    = {};
+
+                if(typeof(Storage) !== "undefined") {
+                    tokenData = localStorage.getItem(storageName);
+                } else {
+                    $log.warn('ambersive.db: this browser doesn\'t support localStorage');
+                }
+
+                if(tokenData !== null){
+                    UserData = User;
+                } else {
+                    User = {};
+                    UserData = User;
+                }
+
+                $rootScope.$broadcast('$stateAuthenticationUser',{user:UserData});
+                return UserData;
+
             };
 
             Auth.setUser = function(user){
