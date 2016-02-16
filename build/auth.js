@@ -256,6 +256,14 @@
               return User;
             };
 
+            Auth.isAuthenticated = function(){
+                var user = Auth.getUser();
+                if(user.id !== undefined){
+                    return true;
+                }
+                return false;
+            };
+
             /**
              * Roles
              */
@@ -457,11 +465,16 @@
                             User = result.data;
                         }
 
+                        $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
+
                         deferred.resolve();
 
                     }, function(result){
 
                         User = {};
+
+                        $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
+
                         deferred.resolve();
 
                     });
