@@ -257,6 +257,10 @@
                 return User;
             };
 
+            Auth.setUser = function(user){
+                User = user;
+            };
+
             Auth.isAuthenticated = function(){
                 var user = Auth.getUser();
                 if(user.id !== undefined){
