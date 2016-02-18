@@ -25,6 +25,10 @@
                 redirect401Url:'',
                 redirect403Route:'',
                 redirect403Url:'',
+                redirect404Route:'',
+                redirect404Url:'',
+                redirect500Route:'',
+                redirect500Url:'',
                 refreshTime:60
             };
 
@@ -43,8 +47,12 @@
                         api:values.api,
                         error401Route:values.redirect401Route,
                         error403Route:values.redirect403Route,
+                        error404Route:values.redirect404Route,
+                        error500Route:values.redirect500Route,
                         error401Url:values.redirect401Url,
                         error403Url:values.redirect403Url,
+                        error404Url:values.redirect404Url,
+                        error500Url:values.redirect500Url,
                         redirectOnError:values.redirectOnError,
                         refreshTime:values.refreshTime
                     };
@@ -54,10 +62,14 @@
         }
     ]);
 
-    angular.module('ambersive.routerui.auth').config(['$urlRouterProvider','$authenticationSettingsProvider','$dbSettingsProvider',
-        function($urlRouterProvider,$authenticationSettingsProvider,$dbSettingsProvider) {
+    angular.module('ambersive.routerui.auth').config(['AuthProvider','$urlRouterProvider','$authenticationSettingsProvider','$dbSettingsProvider',
+        function(AuthProvider,$urlRouterProvider,$authenticationSettingsProvider,$dbSettingsProvider) {
 
             $urlRouterProvider.deferIntercept();
+
+            $urlRouterProvider.otherwise(function($rootScope, $location){
+                AuthProvider.$get().onError(404);
+            });
 
         }
     ]);
@@ -183,18 +195,10 @@
                 }
             );
 
-            $rootScope.$on('$stateChangeSuccess',
-                function(event, toState, toParams, fromState, fromParams, options){
-
-                    // TODO:
-
-                }
-            );
-
             $rootScope.$on('$stateNotFound',
                 function(event, toState, toParams, fromState, fromParams, options){
 
-                    // TODO:
+                    Auth.onError(404,event);
 
                 }
             );
@@ -202,15 +206,7 @@
             $rootScope.$on('$stateChangeError',
                 function(event, toState, toParams, fromState, fromParams){
 
-                    // TODO:
-
-                }
-            );
-
-            $rootScope.$on('$viewContentLoaded',
-                function(event, viewConfig){
-
-                    // TODO:
+                    Auth.onError(500,event);
 
                 }
             );
@@ -218,8 +214,8 @@
         }
     ]);
 
-    angular.module('ambersive.routerui.auth').factory('Auth',['$q','DB','$timeout','$log','$state','$authenticationSettings','$dbSettings','$rootScope',
-        function($q,DB,$timeout,$log,$state,$authenticationSettings,$dbSettings,$rootScope){
+    angular.module('ambersive.routerui.auth').factory('Auth',['$q','DB','$timeout','$window','$log','$state','$authenticationSettings','$dbSettings','$rootScope',
+        function($q,DB,$timeout,$window,$log,$state,$authenticationSettings,$dbSettings,$rootScope){
 
             var Auth            = {},
                 Helper          = {},
@@ -271,7 +267,6 @@
                     UserData = User;
                 }
 
-                $rootScope.$broadcast('$stateAuthenticationUser',{user:UserData});
                 return UserData;
 
             };
@@ -318,37 +313,48 @@
              */
 
             Auth.onError = function(errorCode,event){
+
                 if(errorCode === undefined){
                     $log.warn('ambersive.routerui.auth: please define a error code for error handling');
                     return;
                 }
 
-                var redirectFN = function(code,route){
-                    if($authenticationSettings.redirectOnError === true) {
-                        if (route !== undefined && route !== '') {
-                            $state.go(route);
-                        } else {
-                            $log.warn('ambersive.routerui.auth: please define a route for ' + code + ' errors');
+                var handleError = function(code){
+
+                    var url     = $authenticationSettings['error'+code+'Url'],
+                        route   = $authenticationSettings['error'+code+'Route'];
+
+                    if(url !== undefined && url !== ''){
+
+                        $window.location.href = url;
+                        return;
+
+                    } else {
+
+                        if($authenticationSettings.redirectOnError === true) {
+                            if (route !== undefined && route !== '') {
+                                $state.go(route);
+                            } else {
+                                $log.warn('ambersive.routerui.auth: please define a route for ' + code + ' errors');
+                            }
                         }
+
                     }
+
                 };
 
                 switch(errorCode){
-
+                    case 401:
                     case 403:
-                        var route403 = $authenticationSettings.error403Route;
-                        redirectFN(403,route403);
+                        handleError(errorCode);
                         $rootScope.$broadcast('$statePermissionDenied',{code:errorCode});
                         break;
-
-                    default: // Default it is a 401 Error
-                        var route401 = $authenticationSettings.error401Route;
-                        redirectFN(401,route401);
-                        $rootScope.$broadcast('$statePermissionDenied',{code:errorCode});
+                    default:
+                        handleError(errorCode);
                         break;
-
                 }
 
+                if(event === undefined){ return; }
                 event.preventDefault();
 
             };
@@ -489,6 +495,7 @@
                             User = result.data;
                         }
 
+                        $rootScope.user = User;
                         $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
 
                         deferred.resolve();
@@ -497,6 +504,7 @@
 
                         User = {};
 
+                        $rootScope.user = User;
                         $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
 
                         deferred.resolve();

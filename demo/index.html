@@ -28,6 +28,7 @@
 
                 $authenticationSettingsProvider.setValue('redirect401Route','app.error');
                 $authenticationSettingsProvider.setValue('redirect403Route','app.error');
+                $authenticationSettingsProvider.setValue('redirect404Route','app.error');
 
                     $stateProvider
                        .state('app', {
@@ -117,11 +118,16 @@
                            }
                        });
 
-                $urlRouterProvider.otherwise('/state1');
-
             }])
            .controller('DemoController',
                    function($scope,$log,$rootScope){
+
+                       $scope.user = $rootScope.user;
+
+                       $scope.$on('$stateAuthenticationUser',function(event,args){
+                           if(args.user === undefined){return;}
+                            $scope.user = args.user;
+                       });
 
                        $scope.$on('$statePermissionDenied',function(event,args){
                           alert('error:'+args.code);
@@ -147,9 +153,13 @@
                     <li><a ui-sref="app.state3">State 3 (Redirect no permission)</a></li>
                     <li><a ui-sref="app.state4">State 4 (Redirect if logged to custom route)</a></li>
                     <li><a ui-sref="app.state5">State 5 (Redirect if logged to custom url)</a></li>
+                    <li><a ui-sref="app.state6">State 6 - 404 </a></li>
                 </ul>
             </div>
             <div class="col-xs-12 col-sm-8">
+                <h2>Current User-Data:</h2>
+                {{user}}
+                <h2>State:</h2>
                 <div ui-view=""></div>
             </div>
         </div>
