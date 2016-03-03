@@ -74,6 +74,87 @@
         }
     ]);
 
+    angular.module('ambersive.routerui.auth').directive('permissions',['$compile','$animate',
+        function($compile,$animate) {
+
+            var directive = {};
+
+            directive.restrict      = 'A';
+            directive.transclude    = 'element';
+
+            directive.scope         = {
+                permissions:'='
+            };
+
+            directive.controller = ['Auth','$scope','$rootScope',
+                function(Auth,$scope,$rootScope){
+
+                    var permissions = $scope.permissions,
+                        User        = {};
+
+                    $scope.display = true;
+
+                    $scope.user  = User;
+
+                    $scope.check = function(){
+
+                        var allow = true;
+
+                        if(permissions.length > 0){
+
+                            allow = $scope.permissions.some(function(permission){
+                               return (User.roles !== undefined && User.roles.indexOf(permission) > -1);
+                            });
+                        }
+
+                        return allow;
+
+                    };
+
+                    /**
+                     * Broadcasts
+                     */
+
+                    $rootScope.$on('$stateAuthenticationUser',function(event,args){
+                        if(args.user !== undefined){
+                            User = args.user;
+                            $scope.user = User;
+                        }
+
+                        $scope.check();
+
+                    });
+
+                }
+            ];
+
+            directive.link = function($scope, $element, $attr, ctrl, $transclude) {
+                var block, childScope, previousElements;
+                $scope.$watch('user',function(value){
+
+                    if($scope.check() === false){
+                        return;
+                    }
+
+                    if (!childScope) {
+
+                        $transclude(function(clone, newScope) {
+                            childScope = newScope;
+                            clone[clone.length++] = document.createComment(' end ngIf: ' + $attr.ngIf + ' ');
+                            block = {
+                                clone: clone
+                            };
+                            $animate.enter(clone, $element.parent(), $element);
+                        });
+                    }
+                });
+            };
+
+            return directive;
+
+        }
+    ]);
+
     angular.module('ambersive.routerui.auth').run(['$rootScope','$urlRouter','$state','$log','Auth','$authenticationSettings','DB','$dbSettings',
         function($rootScope,$urlRouter,$state,$log,Auth,$authenticationSettings,DB,$dbSettings){
 
@@ -171,7 +252,6 @@
                     } else {
 
                         User = Auth.getUser();
-
                         if(User.id !== undefined || User.roles !== undefined){
                             UserLogged = true;
                         }
@@ -522,6 +602,12 @@
 
                 return deferred.promise;
             };
+
+            $rootScope.$on('$stateAuthenticationUser',function(event,args){
+                if(args.user !== undefined){
+                    User = args.user;
+                }
+            });
 
             return Auth;
 

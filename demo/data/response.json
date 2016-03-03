@@ -1,6 +1,6 @@
 {
   "status":200,
   "data":{
-    "roles":["User"]
+    "roles":["User","Admin"]
   }
 }

@@ -47,7 +47,12 @@
                                 url:'/state1',
                                 views: {
                                     'main@app': {
-                                        template: '<div>state 1 - inherited roles from abstract definition</div>'
+                                        controller:function($scope){
+
+                                            $scope.permissions = ['Admin'];
+
+                                        },
+                                        template: '<div>state 1 - inherited roles from abstract definition <p permissions="permissions">Dieser Paragraph wird nur angezeigt wenn der Benutzer die entsprechenden Berechtigungen hat.</p></div>'
                                     }
                                 }
                             })
