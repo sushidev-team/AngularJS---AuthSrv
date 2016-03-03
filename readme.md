@@ -121,13 +121,20 @@ Inheritance is possible. You can also override defined roles.
                        .controller('DemoController',
                                function($scope,$log){
 
-
-
                                }
                        );
 
 
 ```
+
+You can also restrict access to single elements by using the directive "permissions".
+The permissions attributes has to be an array of roles.
+
+```sh
+<p permissions="permissions">Paragraph for users</p>
+
+```
+
 ### Options
 
 #### redirectOnLogged
