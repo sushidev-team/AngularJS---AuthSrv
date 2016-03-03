@@ -29,7 +29,8 @@
                 redirect404Url:'',
                 redirect500Route:'',
                 redirect500Url:'',
-                refreshTime:60
+                refreshTime:60,
+                tokenUseage:true
             };
 
             return({
@@ -54,7 +55,8 @@
                         error404Url:values.redirect404Url,
                         error500Url:values.redirect500Url,
                         redirectOnError:values.redirectOnError,
-                        refreshTime:values.refreshTime
+                        refreshTime:values.refreshTime,
+                        tokenUseage:values.tokenUseage
                     };
                 }
             });
@@ -74,8 +76,8 @@
         }
     ]);
 
-    angular.module('ambersive.routerui.auth').directive('permissions',['$compile','$animate',
-        function($compile,$animate) {
+    angular.module('ambersive.routerui.auth').directive('permissions',['$compile','$animate','Auth',
+        function($compile,$animate,Auth) {
 
             var directive = {};
 
@@ -90,7 +92,7 @@
                 function(Auth,$scope,$rootScope){
 
                     var permissions = $scope.permissions,
-                        User        = {};
+                        User        = Auth.getUser();
 
                     $scope.display = true;
 
@@ -130,14 +132,30 @@
 
             directive.link = function($scope, $element, $attr, ctrl, $transclude) {
                 var block, childScope, previousElements;
-                $scope.$watch('user',function(value){
 
-                    if($scope.check() === false){
-                        return;
+                function getBlockNodes(nodes) {
+                    var node = nodes[0];
+                    var endNode = nodes[nodes.length - 1];
+                    var blockNodes;
+
+                    for (var i = 1; node !== endNode && (node = node.nextSibling); i++) {
+                        if (blockNodes || nodes[i] !== node) {
+                            if (!blockNodes) {
+                                blockNodes = jqLite(slice.call(nodes, 0, i));
+                            }
+                            blockNodes.push(node);
+                        }
                     }
 
-                    if (!childScope) {
+                    return blockNodes || nodes;
+                }
 
+
+                $scope.$watch('user',function(value){
+
+                    var allow = $scope.check();
+
+                    if (!childScope && allow === true) {
                         $transclude(function(clone, newScope) {
                             childScope = newScope;
                             clone[clone.length++] = document.createComment(' end ngIf: ' + $attr.ngIf + ' ');
@@ -146,6 +164,25 @@
                             };
                             $animate.enter(clone, $element.parent(), $element);
                         });
+
+                    } else {
+
+                        if (previousElements) {
+                            previousElements.remove();
+                            previousElements = null;
+                        }
+                        if (childScope) {
+                            childScope.$destroy();
+                            childScope = null;
+                        }
+
+                        if (block) {
+                            previousElements = getBlockNodes(block.clone);
+                            $animate.leave(previousElements).then(function() {
+                                previousElements = null;
+                            });
+                            block = null;
+                        }
                     }
                 });
             };
@@ -294,8 +331,8 @@
         }
     ]);
 
-    angular.module('ambersive.routerui.auth').factory('Auth',['$q','DB','$timeout','$window','$log','$state','$authenticationSettings','$dbSettings','$rootScope',
-        function($q,DB,$timeout,$window,$log,$state,$authenticationSettings,$dbSettings,$rootScope){
+    angular.module('ambersive.routerui.auth').factory('Auth',['$q','DB','$timeout','$window','$log','$state','$stateParams','$authenticationSettings','$dbSettings','$rootScope',
+        function($q,DB,$timeout,$window,$log,$state,$stateParams,$authenticationSettings,$dbSettings,$rootScope){
 
             var Auth            = {},
                 Helper          = {},
@@ -331,19 +368,26 @@
             Auth.getUser = function(){
 
                 var storageName = $dbSettings.storageName,
+                    tokenUseage = $dbSettings.tokenUseage,
                     tokenData   = null,
                     UserData    = {};
 
-                if(typeof(Storage) !== "undefined") {
-                    tokenData = localStorage.getItem(storageName);
-                } else {
-                    $log.warn('ambersive.db: this browser doesn\'t support localStorage');
-                }
+                if(tokenUseage === true) {
 
-                if(tokenData !== null){
-                    UserData = User;
+                    if (typeof(Storage) !== "undefined") {
+                        tokenData = localStorage.getItem(storageName);
+                    } else {
+                        $log.warn('ambersive.db: this browser doesn\'t support localStorage');
+                    }
+
+                    if (tokenData !== null) {
+                        UserData = User;
+                    } else {
+                        User = {};
+                        UserData = User;
+                    }
+
                 } else {
-                    User = {};
                     UserData = User;
                 }
 
@@ -353,6 +397,37 @@
 
             Auth.setUser = function(user){
                 User = user;
+                $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
+            };
+
+            Auth.resetUser = function(){
+
+                var storageName = $dbSettings.storageName;
+
+                if (typeof(Storage) !== "undefined") {
+                    localStorage.setItem(storageName,null);
+                } else {
+                    $log.warn('ambersive.db: this browser doesn\'t support localStorage');
+                }
+
+                User = {};
+
+                Auth.reCheck();
+
+                $rootScope.$broadcast('$stateAuthenticationUser',{user:User});
+
+            };
+
+            Auth.hasRole = function(role){
+
+                var hasRole = false;
+
+                if(User.roles !== undefined){
+                    hasRole = (User.roles.indexOf(role) > -1);
+                }
+
+                return hasRole;
+
             };
 
             Auth.isAuthenticated = function(){
@@ -507,6 +582,10 @@
                 return success;
             };
 
+            Auth.reCheck = function(){
+                Auth.check($state,$stateParams);
+            };
+
             Auth.check = function(toState,toParams,fromState,fromParams,options){
 
                 var deferred = $q.defer(),
@@ -517,8 +596,8 @@
                  * Call the promise
                  */
 
-                var callPromise = function(){
-                    deferred.resolve(allow);
+                var callPromise = function(b){
+                    deferred.resolve(b);
                 };
 
                 /**

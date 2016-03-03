@@ -21,6 +21,12 @@
         .config(['$authenticationSettingsProvider','$stateProvider','$urlRouterProvider','$authenticationSettingsProvider','$dbSettingsProvider',
             function ($authenticationSettingsProvider,$stateProvider,$urlRouterProvider,$authenticationSettingsProvider,$dbSettingsProvider) {
 
+                /* Just for demo we deactivate the token useage */
+
+                $authenticationSettingsProvider.setValue('tokenUseage',false);
+
+                // Settings
+
                 $dbSettingsProvider.setBaseUrl('http://test.dev/AuthService2/demo/');
 
                 $authenticationSettingsProvider.setApiValue('baseUrl','http://test.dev/AuthService2/demo/');
@@ -125,9 +131,19 @@
 
             }])
            .controller('DemoController',
-                   function($scope,$log,$rootScope){
+                   function($scope,$log,$rootScope,Auth){
 
                        $scope.user = $rootScope.user;
+
+                       $scope.toggle = function(){
+                           Auth.setUser({
+                               roles:['User']
+                           });
+                       };
+
+                       $scope.login = function(){
+                           Auth.callAPI();
+                       };
 
                        $scope.$on('$stateAuthenticationUser',function(event,args){
                            if(args.user === undefined){return;}
@@ -166,6 +182,9 @@
                 {{user}}
                 <h2>State:</h2>
                 <div ui-view=""></div>
+                <h2>Actions</h2>
+                <p>Please be aware that the authentication is fired automatically if you change the state. Because thats a demo the autentication is always successfull.</p>
+                <button class="btn" ng-click="toggle()">Set roles to user (= remove Admin role)</button>
             </div>
         </div>
     </div>
