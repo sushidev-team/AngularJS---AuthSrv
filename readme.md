@@ -3,7 +3,7 @@
 An AngularJS (1.5) service for adding an authentication service. Based on the idea of [AuthSrv](https://github.com/AMBERSIVE/AngularJS---AuthService) this is a more flexible and robust way to add authentication to router-ui.
 
 ### Version
-0.0.4.0
+0.0.5.0
 
 ### Installation
 
@@ -102,6 +102,23 @@ Inheritance is possible. You can also override defined roles.
                                            }
                                        }
                                    })
+                                   .state('app.state4', {
+                                        parent: 'app',
+                                        url:'/state4',
+                                        data: {
+                                            roles: ['Admin'],
+                                            custom404Check:function(rootScope, event, toState, toParams, fromState, fromParams, options){
+
+                                                return true;
+
+                                            }
+                                        },
+                                        views: {
+                                            'main@app': {
+                                                template: '<div>state 3 - Admin as a role</div>'
+                                            }
+                                        }
+                                    })
                                    .state('app.error', {
                                        parent: 'app',
                                        url:'/error',
@@ -184,6 +201,32 @@ Redirect to URL:
    })
 
 ```
+Custom 404 check function:
+
+This function needs to return a boolean value. If true it throws an 404 error
+
+```sh
+
+   .state('app.state5', {
+       parent: 'app',
+       url:'/state5',
+       data: {
+           roles: [],
+           custom404Check:function(rootScope, event, toState, toParams, fromState, fromParams, options){
+
+               return true;
+
+           }
+       },
+       views: {
+           'main@app': {
+               template: '<div>state 4 - redirect - route</div>'
+           }
+       }
+   })
+
+```
+
 
 
 ### Broadcasts

@@ -222,7 +222,22 @@
 
                     var checkRedirectFN = function(){
                         if(UserLogged === true){
-                            var redirectSettings = toState.data.redirectOnLogged;
+
+                            var redirectSettings         = toState.data.redirectOnLogged;
+                            var custom404Check           = toState.data.custom404Check;
+                            var customCheckAbort404      = false;
+
+                            if(custom404Check !== undefined){
+
+                                customCheckAbort404 = custom404Check($rootScope, event, toState, toParams, fromState, fromParams, options);
+
+                                if(customCheckAbort404 === true){
+
+                                    return Auth.onError(404,event);
+
+                                }
+
+                            }
 
                             if(redirectSettings !== undefined){
 
