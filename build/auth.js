@@ -205,7 +205,7 @@
                 function(event, url) {
 
                 //$urlRouter.sync();
-
+ 
             });
 
             $rootScope.$on('$stateChangeStart',
